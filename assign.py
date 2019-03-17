@@ -29,8 +29,8 @@ class Follower:
 	self.laser_sub = rospy.Subscriber("/scan", LaserScan, self.laser_callback)
 
     def findred(self):
-	x = numpy.array([0, 0, 150])
-	y = numpy.array([1, 1, 160])
+	x = numpy.array([0, 200, 100])
+	y = numpy.array([1, 255, 105])
 	print ("looking for red") 
 	return x, y
 
@@ -62,16 +62,17 @@ class Follower:
     def image_callback(self, msg):
 	global f
 	global dist
+	global mindist
 	col = 1
         cv2.namedWindow("window", 1)
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-	if f == 1:	
-		colours = self.findyellow()	
 	if f == 2:	
+		colours = self.findyellow()	
+	if f == 3:	
 		colours = self.findred()	
-        if f == 3:	
+        if f == 1:	
 		colours = self.findblue()	
 	if f == 4:	
 		colours = self.findgreen()
@@ -146,23 +147,27 @@ class Follower:
 		if scanner.ranges[x] > 0.0001:
 			q = q + 1
 	
-	mindistance = [None] * q
+	mindistance = [None] * q	
+	objpos = [None] * q
 	
 	m = 0
 
 	for x in range(0,639):
 		if scanner.ranges[x] > 0.0001:
 			mindistance[m] = scanner.ranges[x]
+			objpos[m] = x
 			m = m + 1
+			
+	avg = sum(objpos) / len(objpos)
 	dis = min(mindistance)	
 	#print(min(mindistance))
 	dist = dis
 	a = scanner.ranges.index(dis)
-	print a
+	print avg
 
 	rand = random.uniform(0.1, 1)
 
-	if dis < 1.2:
+	if dis < 1.5:
 		if a < 213:
 			self.objleft()
 		if a > 426:
@@ -170,8 +175,8 @@ class Follower:
 		else:
 			self.objcent(rand)
 	else:
-		self.twist.linear.x = 1.2
-		self.twist.angular.z = 0.1
+		self.twist.linear.x = 0.5
+		self.twist.angular.z = 0
 		self.cmd_vel_pub.publish(self.twist)
 
 	
