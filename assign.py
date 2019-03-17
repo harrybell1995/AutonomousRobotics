@@ -13,7 +13,9 @@ from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
 
 f = 1
+dist = 5
 print(f)
+#print(dist)
 
 class Follower:
 
@@ -25,87 +27,116 @@ class Follower:
                                            queue_size=1)
         self.twist = Twist()
 	self.laser_sub = rospy.Subscriber("/scan", LaserScan, self.laser_callback)
-#lower_red = numpy.array([0, 50, 50])
-#upper_red = numpy.array([1, 200, 200])             #find way to make it see colour vals
-#lower_blue = numpy.array([115, 200, 100])
-#upper_blue = numpy.array([125, 255, 105])             #find way to make it see colour 
-#lower_yellow = numpy.array([25, 200, 100])
-#upper_yellow = numpy.array([35, 255, 105])             #find way to make it see colour #lower_green = numpy.array([55, 200, 100])
-#upper_green = numpy.array([65, 255, 105])             #find way to make it see colour vals
-    
-    def currentcolour(self, colnum):
-	if colnum == 1:
-		x = numpy.array([115, 200, 100])
-		y = numpy.array([125, 255, 105])
-		return x, y
-	if colnum == 2:
-		x = numpy.array([0, 50, 50])
-		y = numpy.array([1, 200, 200])
-		return x, y
-	if colnum == 3:
-		x = numpy.array([25, 200, 100])
-		y = numpy.array([35, 255, 105])
-		return x, y
-	if colnum == 4:
-		x = numpy.array([55, 200, 100])
-		y = numpy.array([65, 255, 105])
-		return x, y
+
+    def findred(self):
+	x = numpy.array([0, 0, 150])
+	y = numpy.array([1, 1, 160])
+	print ("looking for red") 
+	return x, y
+
+    def findyellow(self):
+	x = numpy.array([25, 200, 100])
+	y = numpy.array([35, 255, 105])
+	print ("looking for yellow") 
+	return x, y    
+
+    def findblue(self):
+	x = numpy.array([115, 200, 100])
+	y = numpy.array([125, 255, 105])
+	print ("looking for blue") 
+	return x, y    
+
+    def findgreen(self):
+	x = numpy.array([55, 200, 100])
+	y = numpy.array([65, 255, 105])
+	print ("looking for green") 
+	return x, y
+
+    def nextcol(self):
+	global f
+	print ("found colour ") 
+	print(f)
+	f = f + 1
+
 
     def image_callback(self, msg):
 	global f
+	global dist
 	col = 1
         cv2.namedWindow("window", 1)
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-	colours = self.currentcolour(f)
+
+	if f == 1:	
+		colours = self.findyellow()	
+	if f == 2:	
+		colours = self.findred()	
+        if f == 3:	
+		colours = self.findblue()	
+	if f == 4:	
+		colours = self.findgreen()
+	if f == 5:
+	        self.twist.linear.x = 0
+            	self.twist.angular.z = 99
+                self.cmd_vel_pub.publish(self.twist)
+		
+
 	#print colours
-	lower_blue = colours[0]
-	upper_blue = colours[1]
-        mask = cv2.inRange(hsv, lower_blue, upper_blue)
+	lower_bound = colours[0]
+	upper_bound = colours[1]
+        mask = cv2.inRange(hsv, lower_bound, upper_bound)
         h, w, d = image.shape
         search_top = 0
         search_bot = h
         mask[0:search_top, 0:w] = 0
         mask[search_bot:h, 0:w] = 0
         M = cv2.moments(mask)	
+	#for i in range (1, 640):
+	#	i = hsv[i]
+	#	print i
 	
-	if M['m00'] == 0:
-		print(f)
-		f = f + 1
-		if f == 5:
-			f = 1
 	#make an array of the 1 vals that loops through and once found gets removed 
-
-        while M['m00'] > 0:
+        if M['m00'] > 0:
             cx = int(M['m10']/M['m00'])
             cy = int(M['m01']/M['m00'])
             cv2.circle(image, (cx, cy), 2, (255, 255, 255), -1)
             err = cx - w/2
-            self.twist.linear.x = 1
+            self.twist.linear.x = 0.5
             self.twist.angular.z = -float(err) / 100
             print("colour sighted")
             self.cmd_vel_pub.publish(self.twist)
-	    if M['m00'] > 2000000:
-                self.twist.linear.x = 0
-                self.cmd_vel_pub.publish(self.twist)
-		f = f + 1 
-		print('m00')
-		print("found a colour")
-	    break
-	    col = col + 1
-		
+	    print (dist)
+    	    if M['m00'] > 2000000:
+	  	    if dist < 1:
+			self.nextcol()
+		        self.twist.linear.x = 0
+		        self.cmd_vel_pub.publish(self.twist)
+			print("help")
 
-	#if M['m00'] == 0:
-         #   self.twist.linear.x = -0.5
-          #  self.twist.angular.z = 0.2
-           # self.cmd_vel_pub.publish(self.twist)
         cv2.imshow("window", image)
         cv2.waitKey(3)
 
+    def objleft(self):
+	self.twist.linear.x = 0
+	self.twist.angular.z = 0.8
+	self.cmd_vel_pub.publish(self.twist)
+
+    def objcent(self, rand):
+	self.twist.linear.x = 0
+	self.twist.angular.z = 0.8
+	self.cmd_vel_pub.publish(self.twist)
+	#time.sleep(0.5)
+
+    def objright(self):
+	self.twist.linear.x = 0
+	self.twist.angular.z = 0.8
+	self.cmd_vel_pub.publish(self.twist)
+
     def laser_callback(self, msg):
+	global dist
 	scanner = msg
-	scanner.angle_min = 70
-	scanner.angle_max = 110
+	scanner.angle_min = 50
+	scanner.angle_max = 130
 	##time.sleep(1)
 
 	q = 0
@@ -125,28 +156,22 @@ class Follower:
 			m = m + 1
 	dis = min(mindistance)	
 	#print(min(mindistance))
-
+	dist = dis
 	a = scanner.ranges.index(dis)
-	#print a
+	print a
 
 	rand = random.uniform(0.1, 1)
 
 	if dis < 1.2:
 		if a < 213:
-			self.twist.linear.x = 0
-			self.twist.angular.z = 0.8
-			self.cmd_vel_pub.publish(self.twist)
+			self.objleft()
 		if a > 426:
-			self.twist.linear.x = 0
-			self.twist.angular.z = -0.8
-			self.cmd_vel_pub.publish(self.twist)
+			self.objright()
 		else:
-			self.twist.linear.x = 0
-			self.twist.angular.z = -0.8
-			self.cmd_vel_pub.publish(self.twist)
+			self.objcent(rand)
 	else:
-		self.twist.linear.x = 1
-		self.twist.angular.z = 0
+		self.twist.linear.x = 1.2
+		self.twist.angular.z = 0.1
 		self.cmd_vel_pub.publish(self.twist)
 
 	
@@ -156,4 +181,8 @@ rospy.init_node('follower')
 follower = Follower()
 rospy.spin()
 
+
+
+    
 cv2.destroyAllWindows()
+
