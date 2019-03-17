@@ -7,12 +7,14 @@ import cv_bridge
 import rospy
 import time
 
+
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
 
 
 class Follower:
+
     def __init__(self):
         self.bridge = cv_bridge.CvBridge()
         self.image_sub = rospy.Subscriber('/camera/rgb/image_raw', Image,
@@ -56,35 +58,45 @@ class Follower:
         cv2.imshow("window", image)
         cv2.waitKey(3)
 
+
     def laser_callback(self, msg):
 	scanner = msg
+	
+	scanner.angle_min = 80
+	scanner.angle_max = 100
+	j = 1.5646858416414
 
+	flag = 1	
+	q = 0
 
-	leftscan = scanner.ranges[0]
-	centscan = scanner.ranges[320]	
-	rightscan = scanner.ranges[639]
+	for x in range(0,639):
+		if scanner.ranges[x] > 0.0001:
+			q = q + 1
+			
 
-   	self.twist.linear.x = 1
-        self.twist.angular.z = 0
-	self.cmd_vel_pub.publish(self.twist)
-	print centscan
+	
+	mindistance = [None] * q
+	
+	m = 0
 
-	if leftscan < 0.8:
-	    self.twist.linear.x = 0
-	    self.twist.angular.z = 0.5
-            self.cmd_vel_pub.publish(self.twist)
-	    time.sleep(0.1)
-	if centscan < 0.8:
-	    self.twist.linear.x = 0
-	    self.twist.angular.z = 0.3
-            self.cmd_vel_pub.publish(self.twist)
-	    time.sleep(0.1)
-	if rightscan < 0.8:
-	    self.twist.linear.x = 0
-	    self.twist.angular.z = 0.5
-            self.cmd_vel_pub.publish(self.twist)
-	    time.sleep(0.1)
+	for x in range(0,639):
+		if scanner.ranges[x] > 0.0001:
+			mindistance[m] = scanner.ranges[x]
+			m = m + 1
+	dis = min(mindistance)	
+	print(min(mindistance))
 
+	if dis < 1:
+		self.twist.linear.x = 0
+		self.twist.angular.z = -2
+		self.cmd_vel_pub.publish(self.twist)
+		time.sleep(0.01)
+	else:
+		self.twist.linear.x = 1
+		self.twist.angular.z = 0
+		self.cmd_vel_pub.publish(self.twist)
+
+	
 #lower_red = numpy.array([0, 50, 50])
 #upper_red = numpy.array([1, 200, 200])             #find way to make it see colour vals
 cv2.startWindowThread()
