@@ -21,8 +21,8 @@ class Follower:
 	goal.header.stamp = rospy.Time.now()
 	goal.header.frame_id = "map"
 
-	goal.pose.position.x = -4.5
-	goal.pose.position.y = -4
+	goal.pose.position.x = random.uniform(-4, 4)
+	goal.pose.position.y = random.uniform(-4, 4)
 	goal.pose.position.z = 0.0
 
 	goal.pose.orientation.x = 0.0
