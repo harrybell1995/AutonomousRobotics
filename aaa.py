@@ -1,7 +1,10 @@
 import rospy
 import random
+import time
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import Image
+
+
 
 class Follower:
 
@@ -9,7 +12,10 @@ class Follower:
 
 	#r = rospy.rate(10)
 	print("MOVE")
-	self.move()
+	x = 1
+	while x < 2:
+		self.move()
+		time.sleep(10)
 
     def move(self):
 
@@ -24,6 +30,8 @@ class Follower:
 	goal.pose.position.x = random.uniform(-4, 4)
 	goal.pose.position.y = random.uniform(-4, 4)
 	goal.pose.position.z = 0.0
+
+	print("moving to ", goal.pose.position.y, goal.pose.position.x )
 
 	goal.pose.orientation.x = 0.0
 	goal.pose.orientation.y = 0.0
