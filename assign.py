@@ -68,9 +68,9 @@ class Follower:
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-	if f == 2:	
-		colours = self.findyellow()	
 	if f == 3:	
+		colours = self.findyellow()	
+	if f == 2:	
 		colours = self.findred()	
         if f == 1:	
 		colours = self.findblue()	
@@ -119,26 +119,26 @@ class Follower:
 
     def objleft(self):
 	self.twist.linear.x = 0
-	self.twist.angular.z = 0.8
+	self.twist.angular.z = 2
 	self.cmd_vel_pub.publish(self.twist)
 
     def objcent(self, rand):
 	self.twist.linear.x = 0
-	self.twist.angular.z = 0.8
+	self.twist.angular.z = 2
 	self.cmd_vel_pub.publish(self.twist)
 	#time.sleep(0.5)
 
     def objright(self):
 	self.twist.linear.x = 0
-	self.twist.angular.z = 0.8
+	self.twist.angular.z = 2
 	self.cmd_vel_pub.publish(self.twist)
 
     def laser_callback(self, msg):
 	global dist
 	scanner = msg
-	scanner.angle_min = 50
-	scanner.angle_max = 130
-	##time.sleep(1)
+	scanner.angle_min = 70
+	scanner.angle_max = 110
+	time.sleep(0.05)
 
 	q = 0
 
@@ -168,14 +168,16 @@ class Follower:
 	rand = random.uniform(0.1, 1)
 
 	if dis < 1.5:
-		if a < 213:
+		if a < 319:
 			self.objleft()
-		if a > 426:
+			#time.sleep(1)
+		if a > 320:
 			self.objright()
-		else:
-			self.objcent(rand)
+			#time.sleep(1)
+		#else:
+		#	self.objcent(rand)
 	else:
-		self.twist.linear.x = 0.5
+		self.twist.linear.x = 1
 		self.twist.angular.z = 0
 		self.cmd_vel_pub.publish(self.twist)
 
