@@ -1,0 +1,27 @@
+import rospy
+import random
+from geometry_msgs.msg import PoseStamped
+
+rospy.init_node("mynode")
+
+goal_publisher = rospy.Publisher("move_base_simple/goal", PoseStamped, queue_size=5)
+
+goal = PoseStamped()
+
+goal.header.seq = 1 #increment because this is id
+goal.header.stamp = rospy.Time.now() #prints time in seconds
+goal.header.frame_id = "map" #uses map
+
+goal.pose.position.x = random.uniform(-4, 4) #x cood
+goal.pose.position.y = 0.0 #y cood
+goal.pose.position.z = 0.0 #z cood doesnt even do anything
+
+goal.pose.orientation.x = 0.0
+goal.pose.orientation.y = 0.0
+goal.pose.orientation.z = 0.0
+goal.pose.orientation.w = 1.0 #which direction to face when you get there
+
+rospy.sleep(1) #wait for a second
+goal_publisher.publish(goal) #send goal to robot
+
+rospy.spin()
