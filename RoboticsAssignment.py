@@ -143,3 +143,6 @@ class Follower:
 rospy.init_node('follower')
 follower = Follower()
 rospy.spin()
+
+#rostopic pub /move_base_simple/goal geometry_msgs/PoseStamped '{ header: {stamp: now, frame_id: "map"}, pose: { position: {x: -4.5, y: 5, z: 0.0}, orientation: {w: 1}}}'
+#use this to move the robot around if its taking ages in the viva
